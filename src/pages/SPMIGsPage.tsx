@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState, type CSSProperties } from 'react';
 import {
   createSPMIG,
   deleteSPMIG,
@@ -15,6 +15,18 @@ const emptyForm = {
   uom: '',
   unitCost: '',
   packSize: ''
+};
+
+const tableStyle: CSSProperties = {
+  borderCollapse: 'collapse',
+  width: '100%',
+  textAlign: 'left',
+  marginTop: '1rem'
+};
+
+const cellStyle: CSSProperties = {
+  border: '1px solid #ccc',
+  padding: '8px'
 };
 
 function SPMIGsPage() {
@@ -129,32 +141,32 @@ function SPMIGsPage() {
         {loading ? (
           <div>Loading...</div>
         ) : (
-          <table>
+          <table style={tableStyle}>
             <thead>
               <tr>
-                <th>Part No</th>
-                <th>SPMIG</th>
-                <th>Suffix</th>
-                <th>NIIN</th>
-                <th>Description</th>
-                <th>UOM</th>
-                <th>Unit Cost</th>
-                <th>Pack Size</th>
-                <th />
+                <th style={cellStyle}>Part No</th>
+                <th style={cellStyle}>SPMIG</th>
+                <th style={cellStyle}>Suffix</th>
+                <th style={cellStyle}>NIIN</th>
+                <th style={cellStyle}>Description</th>
+                <th style={cellStyle}>UOM</th>
+                <th style={cellStyle}>Unit Cost</th>
+                <th style={cellStyle}>Pack Size</th>
+                <th style={cellStyle} />
               </tr>
             </thead>
             <tbody>
               {spmigs.map((spmig) => (
                 <tr key={spmig.id}>
-                  <td>{spmig.partNumber ?? '-'}</td>
-                  <td>{spmig.spmigCode ?? '-'}</td>
-                  <td>{spmig.suffix ?? '-'}</td>
-                  <td>{spmig.niin ?? '-'}</td>
-                  <td>{spmig.description}</td>
-                  <td>{spmig.uom}</td>
-                  <td>{spmig.unitCost ?? '-'}</td>
-                  <td>{spmig.packSize ?? '-'}</td>
-                  <td>
+                  <td style={cellStyle}>{spmig.partNumber ?? '-'}</td>
+                  <td style={cellStyle}>{spmig.spmigCode ?? '-'}</td>
+                  <td style={cellStyle}>{spmig.suffix ?? '-'}</td>
+                  <td style={cellStyle}>{spmig.niin ?? '-'}</td>
+                  <td style={cellStyle}>{spmig.description}</td>
+                  <td style={cellStyle}>{spmig.uom}</td>
+                  <td style={cellStyle}>{spmig.unitCost ?? '-'}</td>
+                  <td style={cellStyle}>{spmig.packSize ?? '-'}</td>
+                  <td style={cellStyle}>
                     <button onClick={() => onDelete(spmig.id)}>Delete</button>
                   </td>
                 </tr>

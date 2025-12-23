@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import {
   createOverride,
   deleteOverride,
@@ -9,6 +9,23 @@ import {
 } from '../services/firestoreService';
 import { computeProjectRollup } from '../utils/computeProjectRollup';
 import { MRC, Project, ProjectOverride, SPMIG } from '../types';
+
+const currency = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD'
+});
+
+const tableStyle: CSSProperties = {
+  borderCollapse: 'collapse',
+  width: '100%',
+  textAlign: 'left'
+};
+
+const cellStyle: CSSProperties = {
+  border: '1px solid #ccc',
+  padding: '8px',
+  verticalAlign: 'top'
+};
 
 type OverrideForm = {
   mrcId: string;
@@ -94,6 +111,11 @@ function ProjectRollupPage() {
     [rollup]
   );
 
+  const spmigById = useMemo(
+    () => new Map(spmigs.map((s) => [s.id, s])),
+    [spmigs]
+  );
+
   const onOverrideSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!selectedProject) return;
@@ -161,46 +183,57 @@ function ProjectRollupPage() {
         <>
           <section style={{ marginTop: '1rem' }}>
             <h3>Material Rollup</h3>
-            <table>
+            <table style={tableStyle}>
               <thead>
                 <tr>
-                  <th>SPMIG</th>
-                  <th>Description</th>
-                  <th>UOM</th>
-                  <th>Total Needed</th>
-                  <th>Order Qty</th>
-                  <th>Unit Cost</th>
-                  <th>Ext Cost</th>
-                  <th>Contributions</th>
+                  <th style={cellStyle}>SPMIG</th>
+                  <th style={cellStyle}>Suffix</th>
+                  <th style={cellStyle}>Description</th>
+                  <th style={cellStyle}>UOM</th>
+                  <th style={cellStyle}>Total Needed</th>
+                  <th style={cellStyle}>Order Qty</th>
+                  <th style={cellStyle}>Unit Cost</th>
+                  <th style={cellStyle}>Ext Cost</th>
+                  <th style={cellStyle}>Contributions</th>
                 </tr>
               </thead>
               <tbody>
-                {rollup.map((row) => (
-                  <tr key={row.spmigId}>
-                    <td>{row.spmigId}</td>
-                    <td>{row.description}</td>
-                    <td>{row.uom}</td>
-                    <td>{row.totalNeeded}</td>
-                    <td>{row.orderQty}</td>
-                    <td>{row.unitCost ?? '-'}</td>
-                    <td>{row.extCost ?? '-'}</td>
-                    <td>
-                      <ul>
-                        {row.contributions.map((contrib, idx) => (
-                          <li key={idx}>
-                            {contrib.mrcName} ({contrib.occurrences}x): base {contrib.qtyPerOccur} →
-                            effective {contrib.effectiveQtyPerOccur} (total {contrib.totalFromMrc})
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
-                  </tr>
-                ))}
+                {rollup.map((row) => {
+                  const spmigDetails = spmigById.get(row.spmigId);
+                  const spmigCode = spmigDetails?.spmigCode ?? row.spmigId;
+                  const suffix = spmigDetails?.suffix ?? '-';
+                  return (
+                    <tr key={row.spmigId}>
+                      <td style={cellStyle}>{spmigCode}</td>
+                      <td style={cellStyle}>{suffix}</td>
+                      <td style={cellStyle}>{row.description}</td>
+                      <td style={cellStyle}>{row.uom}</td>
+                      <td style={cellStyle}>{row.totalNeeded}</td>
+                      <td style={cellStyle}>{row.orderQty}</td>
+                      <td style={cellStyle}>
+                        {typeof row.unitCost === 'number' ? currency.format(row.unitCost) : '-'}
+                      </td>
+                      <td style={cellStyle}>
+                        {typeof row.extCost === 'number' ? currency.format(row.extCost) : '-'}
+                      </td>
+                      <td style={cellStyle}>
+                        <ul style={{ margin: 0, paddingLeft: '1rem' }}>
+                          {row.contributions.map((contrib, idx) => (
+                            <li key={idx}>
+                              {contrib.mrcName} ({contrib.occurrences}x): base {contrib.qtyPerOccur} →
+                              effective {contrib.effectiveQtyPerOccur} (total {contrib.totalFromMrc})
+                            </li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             <div style={{ marginTop: '0.5rem' }}>
               <strong>Total Estimated Cost: </strong>
-              {totalCost}
+              {currency.format(totalCost)}
             </div>
           </section>
 
