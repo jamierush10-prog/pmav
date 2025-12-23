@@ -8,6 +8,10 @@ import { SPMIG } from '../types';
 
 const emptyForm = {
   description: '',
+  partNumber: '',
+  spmigCode: '',
+  suffix: '',
+  niin: '',
   uom: '',
   unitCost: '',
   packSize: ''
@@ -42,6 +46,10 @@ function SPMIGsPage() {
     try {
       await createSPMIG({
         description: form.description,
+        partNumber: form.partNumber || undefined,
+        spmigCode: form.spmigCode || undefined,
+        suffix: form.suffix || undefined,
+        niin: form.niin || undefined,
         uom: form.uom,
         unitCost: form.unitCost ? Number(form.unitCost) : undefined,
         packSize: form.packSize ? Number(form.packSize) : undefined
@@ -75,6 +83,26 @@ function SPMIGsPage() {
           required
         />
         <input
+          placeholder="Part No"
+          value={form.partNumber}
+          onChange={(e) => setForm({ ...form, partNumber: e.target.value })}
+        />
+        <input
+          placeholder="SPMIG"
+          value={form.spmigCode}
+          onChange={(e) => setForm({ ...form, spmigCode: e.target.value })}
+        />
+        <input
+          placeholder="Suffix"
+          value={form.suffix}
+          onChange={(e) => setForm({ ...form, suffix: e.target.value })}
+        />
+        <input
+          placeholder="NIIN"
+          value={form.niin}
+          onChange={(e) => setForm({ ...form, niin: e.target.value })}
+        />
+        <input
           placeholder="UOM"
           value={form.uom}
           onChange={(e) => setForm({ ...form, uom: e.target.value })}
@@ -104,6 +132,10 @@ function SPMIGsPage() {
           <table>
             <thead>
               <tr>
+                <th>Part No</th>
+                <th>SPMIG</th>
+                <th>Suffix</th>
+                <th>NIIN</th>
                 <th>Description</th>
                 <th>UOM</th>
                 <th>Unit Cost</th>
@@ -114,6 +146,10 @@ function SPMIGsPage() {
             <tbody>
               {spmigs.map((spmig) => (
                 <tr key={spmig.id}>
+                  <td>{spmig.partNumber ?? '-'}</td>
+                  <td>{spmig.spmigCode ?? '-'}</td>
+                  <td>{spmig.suffix ?? '-'}</td>
+                  <td>{spmig.niin ?? '-'}</td>
                   <td>{spmig.description}</td>
                   <td>{spmig.uom}</td>
                   <td>{spmig.unitCost ?? '-'}</td>

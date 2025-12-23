@@ -1,6 +1,10 @@
 export type SPMIG = {
   id: string;
   description: string;
+  partNumber?: string;
+  spmigCode?: string;
+  suffix?: string;
+  niin?: string;
   uom: string;
   unitCost?: number;
   packSize?: number;
