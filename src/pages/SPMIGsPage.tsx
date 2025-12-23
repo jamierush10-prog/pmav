@@ -29,9 +29,21 @@ const cellStyle: CSSProperties = {
   padding: '8px'
 };
 
+const defaultFilters = {
+  partNumber: '',
+  spmigCode: '',
+  suffix: '',
+  niin: '',
+  description: '',
+  uom: '',
+  unitCost: '',
+  packSize: ''
+};
+
 function SPMIGsPage() {
   const [spmigs, setSpmigs] = useState<SPMIG[]>([]);
   const [form, setForm] = useState(emptyForm);
+  const [filters, setFilters] = useState(defaultFilters);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +59,25 @@ function SPMIGsPage() {
       setLoading(false);
     }
   };
+
+  const filteredSpmigs = spmigs.filter((spmig) => {
+    const matches = (field: keyof typeof defaultFilters, value: string | number | undefined) => {
+      const filterVal = filters[field].toLowerCase().trim();
+      if (!filterVal) return true;
+      const valStr = value === undefined ? '' : String(value).toLowerCase();
+      return valStr.includes(filterVal);
+    };
+    return (
+      matches('partNumber', spmig.partNumber) &&
+      matches('spmigCode', spmig.spmigCode) &&
+      matches('suffix', spmig.suffix) &&
+      matches('niin', spmig.niin) &&
+      matches('description', spmig.description) &&
+      matches('uom', spmig.uom) &&
+      matches('unitCost', spmig.unitCost) &&
+      matches('packSize', spmig.packSize)
+    );
+  });
 
   useEffect(() => {
     load();
@@ -154,9 +185,76 @@ function SPMIGsPage() {
                 <th style={cellStyle}>Pack Size</th>
                 <th style={cellStyle} />
               </tr>
+              <tr>
+                <th style={cellStyle}>
+                  <input
+                    placeholder="Search"
+                    value={filters.partNumber}
+                    onChange={(e) => setFilters({ ...filters, partNumber: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </th>
+                <th style={cellStyle}>
+                  <input
+                    placeholder="Search"
+                    value={filters.spmigCode}
+                    onChange={(e) => setFilters({ ...filters, spmigCode: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </th>
+                <th style={cellStyle}>
+                  <input
+                    placeholder="Search"
+                    value={filters.suffix}
+                    onChange={(e) => setFilters({ ...filters, suffix: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </th>
+                <th style={cellStyle}>
+                  <input
+                    placeholder="Search"
+                    value={filters.niin}
+                    onChange={(e) => setFilters({ ...filters, niin: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </th>
+                <th style={cellStyle}>
+                  <input
+                    placeholder="Search"
+                    value={filters.description}
+                    onChange={(e) => setFilters({ ...filters, description: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </th>
+                <th style={cellStyle}>
+                  <input
+                    placeholder="Search"
+                    value={filters.uom}
+                    onChange={(e) => setFilters({ ...filters, uom: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </th>
+                <th style={cellStyle}>
+                  <input
+                    placeholder="Search"
+                    value={filters.unitCost}
+                    onChange={(e) => setFilters({ ...filters, unitCost: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </th>
+                <th style={cellStyle}>
+                  <input
+                    placeholder="Search"
+                    value={filters.packSize}
+                    onChange={(e) => setFilters({ ...filters, packSize: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </th>
+                <th style={cellStyle} />
+              </tr>
             </thead>
             <tbody>
-              {spmigs.map((spmig) => (
+              {filteredSpmigs.map((spmig) => (
                 <tr key={spmig.id}>
                   <td style={cellStyle}>{spmig.partNumber ?? '-'}</td>
                   <td style={cellStyle}>{spmig.spmigCode ?? '-'}</td>
