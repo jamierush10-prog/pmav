@@ -11,23 +11,31 @@ import {
 import { db } from '../firebase';
 import { MRC, Project, ProjectOverride, SPMIG } from '../types';
 
+const cleanUndefined = <T extends Record<string, unknown>>(obj: T) => {
+  const cleaned: Record<string, unknown> = {};
+  Object.entries(obj).forEach(([key, value]) => {
+    if (value !== undefined) cleaned[key] = value;
+  });
+  return cleaned;
+};
+
 const spmigConverter: FirestoreDataConverter<SPMIG> = {
-  toFirestore: ({ id, ...rest }) => rest,
+  toFirestore: ({ id, ...rest }) => cleanUndefined(rest),
   fromFirestore: (snap) => ({ id: snap.id, ...(snap.data() as Omit<SPMIG, 'id'>) })
 };
 
 const mrcConverter: FirestoreDataConverter<MRC> = {
-  toFirestore: ({ id, ...rest }) => rest,
+  toFirestore: ({ id, ...rest }) => cleanUndefined(rest),
   fromFirestore: (snap) => ({ id: snap.id, ...(snap.data() as Omit<MRC, 'id'>) })
 };
 
 const projectConverter: FirestoreDataConverter<Project> = {
-  toFirestore: ({ id, ...rest }) => rest,
+  toFirestore: ({ id, ...rest }) => cleanUndefined(rest),
   fromFirestore: (snap) => ({ id: snap.id, ...(snap.data() as Omit<Project, 'id'>) })
 };
 
 const overrideConverter: FirestoreDataConverter<ProjectOverride> = {
-  toFirestore: ({ id, ...rest }) => rest,
+  toFirestore: ({ id, ...rest }) => cleanUndefined(rest),
   fromFirestore: (snap) => ({ id: snap.id, ...(snap.data() as Omit<ProjectOverride, 'id'>) })
 };
 
