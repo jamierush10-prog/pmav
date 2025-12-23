@@ -106,15 +106,55 @@ function ProjectRollupPage() {
     });
   }, [selectedProject, mrcs, spmigs, overrides]);
 
+  const baseRollup = useMemo(() => {
+    if (!selectedProject) return [];
+    return computeProjectRollup({
+      project: selectedProject,
+      mrcs,
+      spmigs,
+      overrides: []
+    });
+  }, [selectedProject, mrcs, spmigs]);
+
   const totalCost = useMemo(
     () => rollup.reduce((sum, row) => sum + (row.extCost ?? 0), 0),
     [rollup]
+  );
+
+  const baseTotalCost = useMemo(
+    () => baseRollup.reduce((sum, row) => sum + (row.extCost ?? 0), 0),
+    [baseRollup]
   );
 
   const spmigById = useMemo(
     () => new Map(spmigs.map((s) => [s.id, s])),
     [spmigs]
   );
+
+  const mergedRows = useMemo(() => {
+    const map = new Map<
+      string,
+      { base?: (typeof baseRollup)[number]; adjusted?: (typeof rollup)[number] }
+    >();
+    baseRollup.forEach((row) => {
+      map.set(row.spmigId, { base: row, adjusted: map.get(row.spmigId)?.adjusted });
+    });
+    rollup.forEach((row) => {
+      const existing = map.get(row.spmigId);
+      if (existing) {
+        existing.adjusted = row;
+      } else {
+        map.set(row.spmigId, { adjusted: row });
+      }
+    });
+    return Array.from(map.entries())
+      .map(([spmigId, value]) => ({ spmigId, ...value }))
+      .sort((a, b) => {
+        const descA = a.adjusted?.description ?? a.base?.description ?? '';
+        const descB = b.adjusted?.description ?? b.base?.description ?? '';
+        return descA.localeCompare(descB);
+      });
+  }, [baseRollup, rollup]);
 
   const onOverrideSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -159,7 +199,25 @@ function ProjectRollupPage() {
 
   return (
     <div>
-      <h2>Project Rollup</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ margin: 0 }}>Project Rollup</h2>
+        {selectedProject && (
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '12px', textTransform: 'uppercase', color: '#555' }}>
+              Original Est.
+            </div>
+            <div style={{ fontSize: '28px', fontWeight: 700 }}>
+              {currency.format(baseTotalCost)}
+            </div>
+            <div style={{ fontSize: '12px', textTransform: 'uppercase', color: '#555' }}>
+              Adjusted
+            </div>
+            <div style={{ fontSize: '20px', fontWeight: 600 }}>
+              {currency.format(totalCost)}
+            </div>
+          </div>
+        )}
+      </div>
       {error && <div style={{ color: 'red' }}>{error}</div>}
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
         <label>
@@ -190,41 +248,59 @@ function ProjectRollupPage() {
                   <th style={cellStyle}>Suffix</th>
                   <th style={cellStyle}>Description</th>
                   <th style={cellStyle}>UOM</th>
-                  <th style={cellStyle}>Total Needed</th>
-                  <th style={cellStyle}>Order Qty</th>
+                  <th style={cellStyle}>Orig Needed</th>
+                  <th style={cellStyle}>Adj Needed</th>
+                  <th style={cellStyle}>Orig Order</th>
+                  <th style={cellStyle}>Adj Order</th>
                   <th style={cellStyle}>Unit Cost</th>
-                  <th style={cellStyle}>Ext Cost</th>
-                  <th style={cellStyle}>Contributions</th>
+                  <th style={cellStyle}>Orig Ext</th>
+                  <th style={cellStyle}>Adj Ext</th>
+                  <th style={cellStyle}>Contributions (Adj)</th>
                 </tr>
               </thead>
               <tbody>
-                {rollup.map((row) => {
-                  const spmigDetails = spmigById.get(row.spmigId);
-                  const spmigCode = spmigDetails?.spmigCode ?? row.spmigId;
+                {mergedRows.map(({ spmigId, base, adjusted }) => {
+                  const spmigDetails = spmigById.get(spmigId);
+                  const spmigCode = spmigDetails?.spmigCode ?? spmigId;
                   const suffix = spmigDetails?.suffix ?? '-';
                   return (
-                    <tr key={row.spmigId}>
+                    <tr key={spmigId}>
                       <td style={cellStyle}>{spmigCode}</td>
                       <td style={cellStyle}>{suffix}</td>
-                      <td style={cellStyle}>{row.description}</td>
-                      <td style={cellStyle}>{row.uom}</td>
-                      <td style={cellStyle}>{row.totalNeeded}</td>
-                      <td style={cellStyle}>{row.orderQty}</td>
                       <td style={cellStyle}>
-                        {typeof row.unitCost === 'number' ? currency.format(row.unitCost) : '-'}
+                        {adjusted?.description ?? base?.description ?? ''}
+                      </td>
+                      <td style={cellStyle}>{adjusted?.uom ?? base?.uom ?? ''}</td>
+                      <td style={cellStyle}>{base?.totalNeeded ?? '-'}</td>
+                      <td style={cellStyle}>{adjusted?.totalNeeded ?? '-'}</td>
+                      <td style={cellStyle}>{base?.orderQty ?? '-'}</td>
+                      <td style={cellStyle}>{adjusted?.orderQty ?? '-'}</td>
+                      <td style={cellStyle}>
+                        {typeof (adjusted?.unitCost ?? base?.unitCost) === 'number'
+                          ? currency.format(adjusted?.unitCost ?? base?.unitCost ?? 0)
+                          : '-'}
                       </td>
                       <td style={cellStyle}>
-                        {typeof row.extCost === 'number' ? currency.format(row.extCost) : '-'}
+                        {typeof base?.extCost === 'number' ? currency.format(base.extCost) : '-'}
                       </td>
                       <td style={cellStyle}>
-                        <ul style={{ margin: 0, paddingLeft: '1rem' }}>
-                          {row.contributions.map((contrib, idx) => (
-                            <li key={idx}>
-                              {contrib.mrcName} ({contrib.occurrences}x): base {contrib.qtyPerOccur} →
-                              effective {contrib.effectiveQtyPerOccur} (total {contrib.totalFromMrc})
-                            </li>
-                          ))}
-                        </ul>
+                        {typeof adjusted?.extCost === 'number'
+                          ? currency.format(adjusted.extCost)
+                          : '-'}
+                      </td>
+                      <td style={cellStyle}>
+                        {adjusted ? (
+                          <ul style={{ margin: 0, paddingLeft: '1rem' }}>
+                            {adjusted.contributions.map((contrib, idx) => (
+                              <li key={idx}>
+                                {contrib.mrcName} ({contrib.occurrences}x): base {contrib.qtyPerOccur} →
+                                effective {contrib.effectiveQtyPerOccur} (total {contrib.totalFromMrc})
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          '-'
+                        )}
                       </td>
                     </tr>
                   );
